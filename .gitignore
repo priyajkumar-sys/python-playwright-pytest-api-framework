@@ -126,7 +126,7 @@ ipython_config.py
 .pixi/*
 !.pixi/config.toml
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+# PEP 582; used by e.g. .github.com/David-OConnor/pyflow and .github.com/pdm-project/pdm
 __pypackages__/
 
 # Celery stuff
@@ -219,3 +219,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .idea/
+
+# Local environment configuration and secrets
+.env
+.env.*
+!.env.example

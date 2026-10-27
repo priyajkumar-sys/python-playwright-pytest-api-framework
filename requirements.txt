@@ -1,0 +1,15 @@
+# ===================================================
+# PYTHON PLAYWRIGHT + PYTEST AUTOMATION FRAMEWORK
+# ===================================================
+#
+# This file defines the Python dependencies required
+# to install and execute the automation framework.
+#
+# Install all dependencies using:
+# python3 -m pip install -r requirements.txt
+#
+# ===================================================
+
+pytest
+pytest-playwright
+python-dotenv
