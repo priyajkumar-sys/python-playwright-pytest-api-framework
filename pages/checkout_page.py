@@ -12,6 +12,13 @@ class CheckoutPage:
         self.pincode = page.get_by_placeholder("Zip/Postal Code")
         self.continue_button = page.get_by_role("button", name="Continue")
         self.error_message = page.get_by_test_id("error")
+        self.sub_total = page.get_by_test_id("subtotal-label")
+        self.cancel_button = page.get_by_role("button", name="Cancel")
+        self.cart_items = page.locator(".cart_item")
+        self.finish_button = page.get_by_role("button", name="Finish")
+        self.complete_header = page.get_by_test_id("complete-header")
+        self.complete_text = page.get_by_test_id("complete-text")
+        self.download_pdf_button = page.get_by_role("button", name="Generate PDF order")
 
     def start_checkout(self):
         self.checkout_button.click()

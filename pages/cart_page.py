@@ -15,6 +15,7 @@ class CartPage:
         self.add_cart_buttons = page.get_by_role("button", name="Add to cart")
         self.remove_cart_buttons = page.get_by_role("button", name="Remove")
         self.cart_items = page.locator(".cart_item")
+        self.cart_item_cost = page.get_by_test_id("inventory-item-price")
 
     def open_cart(self):
         self.page.get_by_test_id("shopping-cart-link").click()

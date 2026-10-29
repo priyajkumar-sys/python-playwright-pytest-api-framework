@@ -26,3 +26,5 @@ class InventoryPage:
         self.sort_dropdown.select_option("hilo")
 
 
+
+
