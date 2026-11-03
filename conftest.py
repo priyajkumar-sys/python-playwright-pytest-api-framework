@@ -1,9 +1,15 @@
+import json
+from pathlib import Path
+
 import pytest
 from playwright.sync_api import Playwright, Page, Browser, BrowserContext
 from collections.abc import Generator
+
+from Utils.apiBase import APIUtils
 from config import STANDARD_USERNAME, VALID_PASSWORD
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
+from pages.lazy_catalog_page import LazyCatPage
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
 
@@ -52,3 +58,42 @@ def inventory_page(logged_in_page: Page) -> InventoryPage:
 @pytest.fixture
 def checkout_page(logged_in_page: Page) -> CheckoutPage:
     return CheckoutPage(logged_in_page)
+
+@pytest.fixture
+def lazy_catalog_page(logged_in_page: Page) -> LazyCatPage:
+    catalog = LazyCatPage(logged_in_page)
+    catalog.page.goto("https://www.saucedemo.com/dynamic-catalog-lazy-load.html")
+    return catalog
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+@pytest.fixture
+def load_payload():
+    def _load(filename):
+        filepath = BASE_DIR / "test_data/api_payloads" / filename
+        with open(filepath, encoding="utf-8") as file:
+            return json.load(file)
+    return _load
+
+@pytest.fixture
+def api_context(playwright: Playwright):
+    api = playwright.request.new_context(base_url="https://restful-booker.herokuapp.com")
+    yield api
+    api.dispose()
+
+@pytest.fixture
+def auth_headers(api_context, load_payload):
+    client = APIUtils(api_context)
+    credentials = load_payload("auth.json")
+    return client.authenticate(credentials)
+
+@pytest.fixture
+def created_booking(api_context, load_payload):
+    payload = load_payload("create_booking.json")
+    response = api_context.post("/booking", data=payload)
+    assert response.status == 200
+    booking_id = response.json()["bookingid"]
+    return booking_id
+
+
