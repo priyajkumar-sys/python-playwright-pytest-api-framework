@@ -2,13 +2,14 @@ import json
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Playwright, Page, Browser, BrowserContext
+from playwright.sync_api import Playwright, Page, Browser, BrowserContext, expect
 from collections.abc import Generator
 
 from Utils.apiBase import APIUtils
-from config import STANDARD_USERNAME, VALID_PASSWORD
+from config import STANDARD_USERNAME, VALID_PASSWORD,DB_USERNAME1, DB_PASSWORD1
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
+from pages.demoblaze_login_page import DBLoginPage
 from pages.lazy_catalog_page import LazyCatPage
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
@@ -95,5 +96,29 @@ def created_booking(api_context, load_payload):
     assert response.status == 200
     booking_id = response.json()["bookingid"]
     return booking_id
+
+
+@pytest.fixture(scope="function")
+def demoblaze_logged_in_page(browser: Browser, request):
+    username, password = request.param
+
+    context = browser.new_context()
+
+    try:
+        page = context.new_page()
+
+        login_page = DBLoginPage(page)
+        login_page.login(
+            "https://www.demoblaze.com/",
+            username,
+            password
+        )
+
+        expect(page.locator("#nameofuser")).to_contain_text(username)
+
+        yield page
+
+    finally:
+        context.close()
 
 
