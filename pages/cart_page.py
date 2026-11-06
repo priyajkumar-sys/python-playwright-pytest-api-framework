@@ -1,4 +1,6 @@
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
+
+from pages.checkout_page import CheckoutPage
 
 
 class CartPage:
@@ -20,4 +22,14 @@ class CartPage:
     def open_cart(self):
         self.page.get_by_test_id("shopping-cart-link").click()
 
+    def checkout(self) -> CheckoutPage:
+        self.page.get_by_test_id("checkout").click()
+        self.page.wait_for_url("**/checkout-step-one.html")
+        return CheckoutPage(self.page)
+
+    def verify_product(self, product_name: str):
+        product = self.page.get_by_test_id("inventory-item-name").filter(
+            has_text=product_name
+        )
+        expect(product).to_be_visible()
 

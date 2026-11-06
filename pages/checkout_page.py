@@ -1,5 +1,7 @@
 from playwright.sync_api import Page
 
+from pages.checkout_complete_page import CheckoutCompletePage
+
 
 class CheckoutPage:
 
@@ -32,3 +34,10 @@ class CheckoutPage:
 
     def continue_checkout(self):
         self.continue_button.click()
+        self.page.wait_for_url("**/checkout-step-two.html")
+        return CheckoutCompletePage(self.page)
+
+    def finish_order(self) -> CheckoutCompletePage:
+        self.finish_button.click()
+        self.page.wait_for_url("**/checkout-complete.html")
+        return CheckoutCompletePage(self.page)

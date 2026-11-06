@@ -139,4 +139,18 @@ class TestCheckout:
         with pdf_path.open("rb") as pdf_file:
             assert pdf_file.read(5) == b"%PDF-"
 
+    def test_complete_checkout(self, inventory_page: InventoryPage):
+        inventory_page.add_item_to_cart("sauce-labs-backpack")
+        cart_page = inventory_page.open_cart()
+        cart_page.verify_product("Sauce Labs Backpack")
+        checkout_page = cart_page.checkout()
+
+        overview_page = checkout_page.enter_customer_information(
+            "Test", "User", "60601"
+        )
+        checkout_page.continue_checkout()
+
+        complete_page = checkout_page.finish_order()
+
+        complete_page.verify_order_success()
 

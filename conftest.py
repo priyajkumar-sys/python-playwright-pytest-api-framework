@@ -59,9 +59,31 @@ def logged_in_page(browser: Browser, load_payload) -> Generator[Page, None, None
 def cart_page(logged_in_page: Page) -> CartPage:
     return CartPage(logged_in_page)
 
-@pytest.fixture
-def inventory_page(logged_in_page: Page) -> InventoryPage:
-    return InventoryPage(logged_in_page)
+@pytest.fixture(scope="function")
+def inventory_page(
+    browser: Browser,
+    load_payload
+) -> Generator[InventoryPage, None, None]:
+
+    data = load_payload("saucedemo_credentials.json")
+    credentials = data["user_credentials"][0]
+    context = browser.new_context()
+
+    try:
+        page = context.new_page()
+
+        login_page = LoginPage(page)
+
+        inventory = login_page.login(
+            "https://www.saucedemo.com",
+            credentials["sauceDemoValidUsername"],
+            credentials["sauceDemoPassword"]
+        )
+
+        yield inventory
+
+    finally:
+        context.close()
 
 @pytest.fixture
 def checkout_page(logged_in_page: Page) -> CheckoutPage:

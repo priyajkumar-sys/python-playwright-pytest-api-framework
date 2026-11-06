@@ -1,5 +1,7 @@
 from playwright.sync_api import Page
 
+from pages.cart_page import CartPage
+
 
 class InventoryPage:
 
@@ -24,6 +26,17 @@ class InventoryPage:
 
     def sort_by_price_high_to_low(self):
         self.sort_dropdown.select_option("hilo")
+
+    def add_item_to_cart(self, product_id):
+        self.page.get_by_test_id(
+            f"add-to-cart-{product_id}"
+        ).click()
+        return self
+
+    def open_cart(self) -> CartPage:
+        self.page.get_by_test_id("shopping-cart-link").click()
+        self.page.wait_for_url("**/cart.html")
+        return CartPage(self.page)
 
 
 
