@@ -24,3 +24,7 @@ class LoginPage:
         self.page.wait_for_url("**/inventory.html")
         return InventoryPage(self.page)
 
+    def attempt_login(self, base_url, username, password):
+        self.page.goto(base_url)
+        self.enter_credentials(username, password)
+        self.submit_login()

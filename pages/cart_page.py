@@ -21,6 +21,8 @@ class CartPage:
 
     def open_cart(self):
         self.page.get_by_test_id("shopping-cart-link").click()
+        self.page.wait_for_url("**/cart.html")
+        return CartPage(self.page)
 
     def checkout(self) -> CheckoutPage:
         self.page.get_by_test_id("checkout").click()

@@ -29,55 +29,77 @@ class TestCheckout:
         expect(checkout_page.last_name).to_be_visible()
         expect(checkout_page.pincode).to_be_visible()
 
-    def test_checkout_required_fields_error_validation(self, base_url, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
+    def test_checkout_required_fields_error_validation(
+            self,
+            base_url,
+            inventory_page: InventoryPage
+    ):
         # Add product and navigate to checkout
         inventory_page.inventory_items.first.get_by_role(
-            "button", name="Add to cart").click()
-        cart_page.open_cart()
-        checkout_page.start_checkout()
+            "button", name="Add to cart"
+        ).click()
+
+        cart_page = inventory_page.open_cart()
+        checkout_page = cart_page.checkout()
 
         # Validation 1: All fields empty
-        checkout_page.continue_checkout()
-        expect(checkout_page.error_message).to_have_text("Error: First Name is required")
+        checkout_page.submit_customer_information()
+        expect(checkout_page.error_message).to_have_text(
+            "Error: First Name is required")
 
         # Validation 2: Last name missing
         checkout_page.first_name.fill("Priya")
-        checkout_page.continue_checkout()
-        expect(checkout_page.error_message).to_have_text("Error: Last Name is required")
+        checkout_page.submit_customer_information()
+        expect(checkout_page.error_message).to_have_text(
+            "Error: Last Name is required")
 
         # Validation 3: Postal code missing
         checkout_page.last_name.fill("Kumar")
-        checkout_page.continue_checkout()
-        expect(checkout_page.error_message).to_have_text("Error: Postal Code is required")
-        expect(checkout_page.page).to_have_url(base_url + "/checkout-step-one.html")
+        checkout_page.submit_customer_information()
+        expect(checkout_page.error_message).to_have_text(
+            "Error: Postal Code is required")
+        expect(checkout_page.page).to_have_url(
+            base_url + "/checkout-step-one.html")
 
-    def test_valid_checkout_information(self, base_url, cart_page: CartPage, inventory_page: InventoryPage,
-                                      checkout_page: CheckoutPage):
-        # Add product and navigate to checkout
-        inventory_page.inventory_items.first.get_by_role(
-            "button", name="Add to cart").click()
-        cart_page.open_cart()
-        checkout_page.start_checkout()
-        checkout_page.enter_customer_information("Priya", "Kumar", "60061")
-        checkout_page.continue_checkout()
-        expect(checkout_page.page).to_have_url(base_url + "/checkout-step-two.html")
-
-    def test_items_total_price_accurate(self, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
+    def test_items_total_price_accurate(self,inventory_page: InventoryPage):
+        # Step 1: Select two random products
         all_items = inventory_page.inventory_items
         expect(all_items).to_have_count(6)
         selected_items = random.sample(all_items.all(), 2)
         for item in selected_items:
             item.get_by_role("button", name="Add to cart").click()
-        cart_page.open_cart()
+
+        # Step 2: Navigate to cart using the same browser page
+        cart_page = inventory_page.open_cart()
+
+        # Step 3: Verify cart contains two products
+        expect(cart_page.page.locator(".cart_item")).to_have_count(2)
+
+        # Step 4: Calculate expected subtotal
         all_prices = cart_page.cart_item_cost.all_text_contents()
-        prices = [Decimal(price.replace("$", "")) for price in all_prices]
+
+        prices = [Decimal(price.replace("$", ""))
+            for price in all_prices]
+
         expected_sum_price = sum(prices)
-        checkout_page.start_checkout()
-        checkout_page.enter_customer_information("Priya", "Kumar", "60061")
+
+        # Step 5: Navigate to checkout
+        checkout_page = cart_page.checkout()
+        checkout_page.enter_customer_information(
+            "Priya", "Kumar", "60061")
+
+        # Step 6: Continue to checkout overview
         checkout_page.continue_checkout()
-        sum_price = checkout_page.sub_total.inner_text()
-        actual_sum_price = Decimal(sum_price.split("$")[1]).quantize(Decimal("0.01"))
-        assert actual_sum_price == expected_sum_price
+
+        # Step 7: Get actual subtotal
+        subtotal_text = checkout_page.sub_total.inner_text()
+
+        actual_sum_price = Decimal(subtotal_text.split("$")[1]).quantize(Decimal("0.01"))
+
+        # Step 8: Compare expected and actual subtotal
+        assert actual_sum_price == expected_sum_price, (
+            f"Expected subtotal: ${expected_sum_price}, "
+            f"but actual subtotal was ${actual_sum_price}")
 
     def test_cancelling_checkout_preserves_cart(self, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
         all_items = inventory_page.inventory_items

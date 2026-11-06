@@ -32,10 +32,13 @@ class CheckoutPage:
         self.last_name.fill(last_name)
         self.pincode.fill(postal_code)
 
-    def continue_checkout(self):
+    def submit_customer_information(self):
         self.continue_button.click()
+
+    def continue_checkout(self):
+        self.submit_customer_information()
         self.page.wait_for_url("**/checkout-step-two.html")
-        return CheckoutCompletePage(self.page)
+        return self
 
     def finish_order(self) -> CheckoutCompletePage:
         self.finish_button.click()
