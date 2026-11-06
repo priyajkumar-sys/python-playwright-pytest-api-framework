@@ -1,8 +1,6 @@
 import random
 
 from playwright.sync_api import Page, expect
-
-from config import SAUCEDEMO_URL
 from conftest import base_url
 import pytest
 

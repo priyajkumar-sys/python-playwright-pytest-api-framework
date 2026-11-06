@@ -6,7 +6,7 @@ from playwright.sync_api import Playwright, Page, Browser, BrowserContext, expec
 from collections.abc import Generator
 
 from Utils.apiBase import APIUtils
-from config import STANDARD_USERNAME, VALID_PASSWORD, SAUCEDEMO_URL
+from config import SAUCEDEMO_URL
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
 from pages.demoblaze_login_page import DBLoginPage
@@ -28,17 +28,24 @@ def login_page(page: Page):
     return LoginPage(page)
 
 @pytest.fixture(scope="function")
-def logged_in_page(browser: Browser) -> Generator[Page, None, None]:
+def logged_in_page(browser: Browser, load_payload) -> Generator[Page, None, None]:
+
+    data = load_payload("saucedemo_credentials.json")
+    credentials = data["user_credentials"][0]
+
+    username = credentials["sauceDemoValidUsername"]
+    password = credentials["sauceDemoPassword"]
+
     context = browser.new_context()
 
     try:
         page = context.new_page()
 
         login_page = LoginPage(page)
-        login_page.login(
+        inventory_page = login_page.login(
             "https://www.saucedemo.com",
-            STANDARD_USERNAME,
-            VALID_PASSWORD
+            username,
+            password
         )
 
         page.wait_for_url("**/inventory.html")
@@ -72,10 +79,15 @@ BASE_DIR = Path(__file__).resolve().parent
 @pytest.fixture
 def load_payload():
     def _load(filename):
-        filepath = BASE_DIR / "test_data/api_payloads" / filename
+        filepath = BASE_DIR / "test_data/json_files" / filename
         with open(filepath, encoding="utf-8") as file:
             return json.load(file)
     return _load
+
+@pytest.fixture
+def saucedemo_credentials(load_payload):
+    data = load_payload("saucedemo_credentials.json")
+    return data["user_credentials"][0]
 
 @pytest.fixture
 def api_context(playwright: Playwright):
@@ -127,3 +139,14 @@ def demoblaze_logged_in_page(browser: Browser, request):
         context.close()
 
 
+@pytest.fixture
+def login_credentials(request, load_payload):
+    data = load_payload("saucedemo_credentials.json")
+    credentials = data["user_credentials"][0]
+
+    username_key = request.param
+
+    return {
+        "username": credentials[username_key],
+        "password": credentials["sauceDemoPassword"]
+    }
