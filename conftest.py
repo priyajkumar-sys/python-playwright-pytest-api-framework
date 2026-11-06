@@ -6,7 +6,7 @@ from playwright.sync_api import Playwright, Page, Browser, BrowserContext, expec
 from collections.abc import Generator
 
 from Utils.apiBase import APIUtils
-from config import STANDARD_USERNAME, VALID_PASSWORD,DB_USERNAME1, DB_PASSWORD1
+from config import STANDARD_USERNAME, VALID_PASSWORD, SAUCEDEMO_URL
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
 from pages.demoblaze_login_page import DBLoginPage
@@ -21,7 +21,7 @@ def configure_test_id(playwright: Playwright):
 
 @pytest.fixture(scope="session")
 def base_url():
-    return "https://www.saucedemo.com"
+    return SAUCEDEMO_URL
 
 @pytest.fixture
 def login_page(page: Page):
@@ -63,7 +63,7 @@ def checkout_page(logged_in_page: Page) -> CheckoutPage:
 @pytest.fixture
 def lazy_catalog_page(logged_in_page: Page) -> LazyCatPage:
     catalog = LazyCatPage(logged_in_page)
-    catalog.page.goto("https://www.saucedemo.com/dynamic-catalog-lazy-load.html")
+    catalog.page.goto(SAUCEDEMO_URL + "/dynamic-catalog-lazy-load.html")
     return catalog
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -87,7 +87,9 @@ def api_context(playwright: Playwright):
 def auth_headers(api_context, load_payload):
     client = APIUtils(api_context)
     credentials = load_payload("auth.json")
-    return client.authenticate(credentials)
+    response = client.authenticate("/auth", credentials)
+    token = response.json()["token"]
+    return {"Cookie": f"token={token}"}
 
 @pytest.fixture
 def created_booking(api_context, load_payload):
@@ -115,6 +117,9 @@ def demoblaze_logged_in_page(browser: Browser, request):
         )
 
         expect(page.locator("#nameofuser")).to_contain_text(username)
+        print("Local Storage:", page.evaluate("JSON.stringify(localStorage)"))
+        print("Session Storage:", page.evaluate("JSON.stringify(sessionStorage)"))
+        print("Cookies:", context.cookies())
 
         yield page
 

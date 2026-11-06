@@ -3,6 +3,7 @@ import time
 from decimal import Decimal
 from pathlib import Path
 
+from config import SAUCEDEMO_URL
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
 from pages.inventory_page import InventoryPage
@@ -13,22 +14,22 @@ class TestCheckout:
 
     page: Page
 
-    def test_checkout_page_loads(self, checkout_page: CheckoutPage, inventory_page: InventoryPage, cart_page: CartPage):
+    def test_checkout_page_loads(self, base_url, checkout_page: CheckoutPage, inventory_page: InventoryPage, cart_page: CartPage):
         all_items = inventory_page.inventory_items
         expect(all_items.first).to_be_visible()
         random_item = random.choice(all_items.all())
         random_item.get_by_role("button", name="Add to cart").click()
         cart_page.open_cart()
-        expect(cart_page.page).to_have_url("https://www.saucedemo.com/cart.html")
+        expect(cart_page.page).to_have_url(SAUCEDEMO_URL + "/cart.html")
         checkout_page.start_checkout()
         expect(checkout_page.page).to_have_url(
-            "https://www.saucedemo.com/checkout-step-one.html"
+            base_url + "/checkout-step-one.html"
         )
         expect(checkout_page.first_name).to_be_visible()
         expect(checkout_page.last_name).to_be_visible()
         expect(checkout_page.pincode).to_be_visible()
 
-    def test_checkout_required_fields_error_validation(self, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
+    def test_checkout_required_fields_error_validation(self, base_url, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
         # Add product and navigate to checkout
         inventory_page.inventory_items.first.get_by_role(
             "button", name="Add to cart").click()
@@ -48,9 +49,9 @@ class TestCheckout:
         checkout_page.last_name.fill("Kumar")
         checkout_page.continue_checkout()
         expect(checkout_page.error_message).to_have_text("Error: Postal Code is required")
-        expect(checkout_page.page).to_have_url("https://www.saucedemo.com/checkout-step-one.html")
+        expect(checkout_page.page).to_have_url(base_url + "/checkout-step-one.html")
 
-    def test_valid_checkout_information(self, cart_page: CartPage, inventory_page: InventoryPage,
+    def test_valid_checkout_information(self, base_url, cart_page: CartPage, inventory_page: InventoryPage,
                                       checkout_page: CheckoutPage):
         # Add product and navigate to checkout
         inventory_page.inventory_items.first.get_by_role(
@@ -59,7 +60,7 @@ class TestCheckout:
         checkout_page.start_checkout()
         checkout_page.enter_customer_information("Priya", "Kumar", "60061")
         checkout_page.continue_checkout()
-        expect(checkout_page.page).to_have_url("https://www.saucedemo.com/checkout-step-two.html")
+        expect(checkout_page.page).to_have_url(base_url + "/checkout-step-two.html")
 
     def test_items_total_price_accurate(self, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
         all_items = inventory_page.inventory_items
@@ -112,7 +113,7 @@ class TestCheckout:
         expect(checkout_page.complete_header).to_have_text("Thank you for your order!")
         expect(checkout_page.complete_text).to_have_text("Your order has been dispatched, and will arrive just as fast as the pony can get there!")
 
-    def test_generate_order_pdf(self, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
+    def test_generate_order_pdf(self, base_url, cart_page: CartPage, inventory_page: InventoryPage, checkout_page: CheckoutPage):
         all_items = inventory_page.inventory_items
         expect(all_items).to_have_count(6)
         selected_items = random.sample(all_items.all(), 2)
@@ -126,7 +127,7 @@ class TestCheckout:
         checkout_page.continue_checkout()
         checkout_page.finish_button.click()
         expect(checkout_page.page).to_have_url(
-            "https://www.saucedemo.com/checkout-complete.html")
+            base_url + "/checkout-complete.html")
         with checkout_page.page.expect_download() as download_info:
             checkout_page.download_pdf_button.click()
         download = download_info.value

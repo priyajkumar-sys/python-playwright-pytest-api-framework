@@ -1,6 +1,8 @@
 import random
 
 from playwright.sync_api import Page, expect
+
+from config import SAUCEDEMO_URL
 from conftest import base_url
 import pytest
 
@@ -30,7 +32,7 @@ class TestInventory:
         cart_page.remove_cart_buttons.click()
         expect(cart_page.cart_badge).not_to_be_visible()
 
-    def test_correct_product_added_to_cart(self, cart_page: CartPage, inventory_page: InventoryPage):
+    def test_correct_product_added_to_cart(self, base_url, cart_page: CartPage, inventory_page: InventoryPage):
         all_items = inventory_page.inventory_items
         expect(all_items.first).to_be_visible()
         random_item = random.choice(all_items.all())
@@ -39,7 +41,7 @@ class TestInventory:
         ).inner_text()
         random_item.get_by_role("button", name="Add to cart").click()
         cart_page.open_cart()
-        expect(cart_page.page).to_have_url("https://www.saucedemo.com/cart.html")
+        expect(cart_page.page).to_have_url(base_url + "/cart.html")
         actual_item_name = cart_page.page.locator(
             ".cart_item"
         ).get_by_test_id("inventory-item-name").inner_text()
